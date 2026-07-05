@@ -1,0 +1,7 @@
+# Local-only artifacts — Railway rebuilds node_modules/.next itself.
+node_modules/
+.next/
+deploy-bundle/
+echamelo-deploy.zip
+.env.local
+.env.production.example

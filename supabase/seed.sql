@@ -1,0 +1,16 @@
+-- Categories are seeded inline in 0001_init.sql.
+--
+-- Admin seeding (manual, no public signup path — see project memory
+-- "project-echamelo-business-rules"):
+--
+-- 1. Create the user normally (sign up through the app, or via the
+--    Supabase dashboard -> Authentication -> Add user) so a matching
+--    public.profiles row is created by the handle_new_user() trigger.
+-- 2. Find their id (Authentication -> Users, or:
+--      select id, email from auth.users where email = 'admin@echamelo.com.mx';
+--    ) and run:
+--
+--      update public.profiles set is_admin = true where id = '<uuid>';
+--
+-- There is intentionally no seed data for admin users here since it
+-- requires a real auth.users row created through Supabase Auth first.
