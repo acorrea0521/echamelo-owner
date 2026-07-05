@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Room, LocalAudioTrack, LocalVideoTrack, createLocalAudioTrack, createLocalVideoTrack } from "livekit-client";
 
 export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
   const router = useRouter();
@@ -22,6 +23,8 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
   const [chatMessages, setChatMessages] = useState<Array<{ text: string; timestamp: number }>>([]);
   const chatInputRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const roomRef = useRef<Room | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
@@ -72,11 +75,59 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        localStreamRef.current = stream;
       }
     }).catch(() => {
       console.log("Cámara no disponible");
     });
   }, []);
+
+  useEffect(() => {
+    const connectToLiveKit = async () => {
+      try {
+        const tokenRes = await fetch("/api/livekit/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ streamId }),
+        });
+        const { token, url } = await tokenRes.json();
+
+        const room = new Room();
+        roomRef.current = room;
+
+        await room.connect(url, token);
+        console.log("Vendor conectado a LiveKit");
+
+        // Publish video and audio tracks
+        if (localStreamRef.current) {
+          const videoTracks = localStreamRef.current.getVideoTracks();
+          const audioTracks = localStreamRef.current.getAudioTracks();
+
+          if (videoTracks.length > 0) {
+            const videoTrack = new LocalVideoTrack(videoTracks[0]);
+            await room.localParticipant.publishTrack(videoTrack);
+            console.log("Video publicado a LiveKit");
+          }
+
+          if (audioTracks.length > 0) {
+            const audioTrack = new LocalAudioTrack(audioTracks[0]);
+            await room.localParticipant.publishTrack(audioTrack);
+            console.log("Audio publicado a LiveKit");
+          }
+        }
+      } catch (err) {
+        console.error("Error connecting to LiveKit:", err);
+      }
+    };
+
+    if (localStreamRef.current) {
+      connectToLiveKit();
+    }
+
+    return () => {
+      roomRef.current?.disconnect();
+    };
+  }, [streamId]);
 
   useEffect(() => {
     const markAsLive = async () => {
