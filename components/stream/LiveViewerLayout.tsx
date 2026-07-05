@@ -120,10 +120,15 @@ export function LiveViewerLayout({ streamId }: { streamId: string }) {
         };
 
         room.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
-          participant.videoTrackPublications.forEach(attachVideoTrack);
+          console.log("Participante conectado:", participant.name);
+          participant.videoTrackPublications.forEach((pub) => {
+            console.log("Video track encontrado:", pub);
+            attachVideoTrack(pub);
+          });
         });
 
         room.on(RoomEvent.TrackSubscribed, (track: any) => {
+          console.log("Track suscrito:", track.kind);
           if (track.kind === "video" && videoRef.current) {
             const element = track.attach();
             element.style.width = "100%";
@@ -135,10 +140,15 @@ export function LiveViewerLayout({ streamId }: { streamId: string }) {
         });
 
         await room.connect(url, token);
+        console.log("Conectado a LiveKit. Participantes remotos:", room.remoteParticipants.size);
 
         // Attach video from existing participants
         room.remoteParticipants.forEach((participant) => {
-          participant.videoTrackPublications.forEach(attachVideoTrack);
+          console.log("Participante remoto existente:", participant.name);
+          participant.videoTrackPublications.forEach((pub) => {
+            console.log("Video track existente:", pub);
+            attachVideoTrack(pub);
+          });
         });
       } catch (err) {
         console.error("Error connecting to LiveKit:", err);
