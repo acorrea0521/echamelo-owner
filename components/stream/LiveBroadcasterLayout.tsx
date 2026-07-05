@@ -19,7 +19,9 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
     shipping: "",
   });
   const [chatMessage, setChatMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState<Array<{ text: string; timestamp: number }>>([]);
   const chatInputRef = useRef<HTMLInputElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
@@ -92,10 +94,10 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [id.replace("auction-", "")]: value,
+      [name]: value,
     }));
   };
 
@@ -127,10 +129,10 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
 
   const handleSendMessage = () => {
     if (!chatMessage.trim()) return;
-    console.log("Vendor mensaje:", chatMessage);
+    setChatMessages((prev) => [...prev, { text: chatMessage, timestamp: Date.now() }]);
     setChatMessage("");
-    if (chatInputRef.current) {
-      chatInputRef.current.focus();
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
   };
 
@@ -360,7 +362,7 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
             <label style={{ display: "block", fontSize: "10px", fontWeight: 700, color: "var(--mute)", marginBottom: "5px" }}>
               Código del Producto *
             </label>
-            <input type="text" id="auction-product-code" placeholder="Ej: PROD-001..."
+            <input type="text" name="productCode" placeholder="Ej: PROD-001..."
               value={formData.productCode} onChange={handleFormChange} style={{
               width: "100%",
               background: "#1e1e1e",
@@ -403,7 +405,7 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
             <label style={{ display: "block", fontSize: "10px", fontWeight: 700, color: "var(--mute)", marginBottom: "5px" }}>
               Precio de Salida (MXN) *
             </label>
-            <input type="number" id="auction-start-price" placeholder="100" min="1"
+            <input type="number" name="startPrice" placeholder="100" min="1"
               value={formData.startPrice} onChange={handleFormChange} style={{
               width: "100%",
               background: "#1e1e1e",
@@ -422,7 +424,7 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
             <label style={{ display: "block", fontSize: "10px", fontWeight: 700, color: "var(--mute)", marginBottom: "5px" }}>
               Envío y Manejo (MXN)
             </label>
-            <input type="number" id="auction-shipping" placeholder="0" min="0"
+            <input type="number" name="shipping" placeholder="0" min="0"
               value={formData.shipping} onChange={handleFormChange} style={{
               width: "100%",
               background: "#1e1e1e",
@@ -464,38 +466,67 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
         right: 0,
         background: "#1a1a1a",
         borderTop: "1px solid #333",
-        padding: "10px 12px",
         display: "flex",
-        alignItems: "center",
-        gap: "8px",
+        flexDirection: "column",
+        maxHeight: "40vh",
         zIndex: 200,
       }}>
-        <input ref={chatInputRef} type="text" placeholder="Mensaje..."
-          value={chatMessage} onChange={(e) => setChatMessage(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()} style={{
+        <div ref={chatScrollRef} style={{
           flex: 1,
-          background: "rgba(0,0,0,.5)",
-          border: "1px solid rgba(255,255,255,.2)",
-          borderRadius: "12px",
-          color: "#fff",
-          padding: "8px 12px",
-          fontSize: "13px",
-          fontFamily: "var(--fb)",
-          outline: "none",
-        }} />
-        <button onClick={handleSendMessage} style={{
-          background: "var(--gold)",
-          border: "none",
-          borderRadius: "50%",
-          width: "32px",
-          height: "32px",
+          overflowY: "auto",
+          padding: "10px 12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+        }}>
+          {chatMessages.map((msg, idx) => (
+            <div key={idx} style={{
+              background: "rgba(245,200,66,.15)",
+              borderLeft: "3px solid var(--gold)",
+              padding: "8px 10px",
+              borderRadius: "6px",
+              fontSize: "13px",
+              color: "#fff",
+              wordBreak: "break-word",
+            }}>
+              {msg.text}
+            </div>
+          ))}
+        </div>
+        <div style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
+          gap: "8px",
+          padding: "10px 12px",
+          borderTop: "1px solid #333",
         }}>
-          <i className="ti ti-send" style={{ fontSize: "14px", color: "#000" }} />
-        </button>
+          <input ref={chatInputRef} type="text" placeholder="Mensaje..."
+            value={chatMessage} onChange={(e) => setChatMessage(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()} style={{
+            flex: 1,
+            background: "rgba(0,0,0,.5)",
+            border: "1px solid rgba(255,255,255,.2)",
+            borderRadius: "12px",
+            color: "#fff",
+            padding: "8px 12px",
+            fontSize: "13px",
+            fontFamily: "var(--fb)",
+            outline: "none",
+          }} />
+          <button onClick={handleSendMessage} style={{
+            background: "var(--gold)",
+            border: "none",
+            borderRadius: "50%",
+            width: "32px",
+            height: "32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}>
+            <i className="ti ti-send" style={{ fontSize: "14px", color: "#000" }} />
+          </button>
+        </div>
       </div>
 
       {/* NUEVA SUBASTA BUTTON */}
