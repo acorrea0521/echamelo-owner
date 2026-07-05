@@ -468,16 +468,16 @@ export function LiveBroadcasterLayout({ streamId }: { streamId: string }) {
         borderTop: "1px solid #333",
         display: "flex",
         flexDirection: "column",
-        maxHeight: "40vh",
-        zIndex: 200,
+        maxHeight: "20vh",
+        zIndex: 100,
       }}>
         <div ref={chatScrollRef} style={{
           flex: 1,
           overflowY: "auto",
-          padding: "10px 12px",
+          padding: "8px 12px",
           display: "flex",
           flexDirection: "column",
-          gap: "8px",
+          gap: "6px",
         }}>
           {chatMessages.map((msg, idx) => (
             <div key={idx} style={{
