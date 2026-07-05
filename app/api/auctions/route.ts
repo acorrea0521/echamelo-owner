@@ -35,12 +35,11 @@ export async function POST(request: Request) {
       seller_id: user.id,
       title: productCode,
       description: `Tipo: ${auctionType}`,
-      starting_price: startPrice,
-      current_price: startPrice,
+      starting_price_cents: Math.round(startPrice * 100),
       auction_type: auctionType,
       status: "live",
       stream_id: streamId,
-      shipping_cost: shipping || 0,
+      shipping_cost_cents: Math.round((shipping || 0) * 100),
     })
     .select("id")
     .single();
