@@ -106,8 +106,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No se pudo autorizar tu tarjeta." }, { status: 400 });
   }
 
-  const { data: rpcResult, error } = await supabase.rpc("place_bid", {
+  // place_bid_secure is service-role-only (see migration 0026): the browser
+  // can never reach it directly, so the ONLY path to a recorded bid is this
+  // route, which authorized the Stripe hold above. p_amount_cents is the
+  // exact amount the hold covers — the function rejects with
+  // bid_amount_changed if a concurrent bid moved the quick-bid minimum.
+  const { data: rpcResult, error } = await admin.rpc("place_bid_secure", {
     p_listing_id: listingId,
+    p_bidder_id: user.id,
     p_amount_cents: bidAmountCents,
     p_is_quick: isQuick,
   });
@@ -177,6 +183,7 @@ function mapBidError(message: string) {
   if (message.includes("auction_not_active")) return "Esta subasta no está activa.";
   if (message.includes("auction_ended")) return "La subasta ya terminó.";
   if (message.includes("bid_too_low")) return "Tu puja es menor al mínimo permitido.";
+  if (message.includes("bid_amount_changed")) return "La puja mínima cambió. Intenta de nuevo.";
   if (message.includes("cannot_bid_on_own_listing")) return "No puedes pujar en tu propio producto.";
   if (message.includes("listing_not_found")) return "Producto no encontrado.";
   return "No se pudo procesar tu puja.";

@@ -985,6 +985,13 @@ export type Database = {
       }
       streams: {
         Row: {
+          auction_seconds: number
+          auction_type: string
+          category_id: string | null
+          is_private: boolean
+          notify_followers: boolean
+          scheduled_at: string | null
+          tags: string[]
           chat_paused: boolean
           chat_slow_mode_seconds: number
           created_at: string
@@ -1001,6 +1008,13 @@ export type Database = {
           viewer_count: number
         }
         Insert: {
+          auction_seconds?: number
+          auction_type?: string
+          category_id?: string | null
+          is_private?: boolean
+          notify_followers?: boolean
+          scheduled_at?: string | null
+          tags?: string[]
           chat_paused?: boolean
           chat_slow_mode_seconds?: number
           created_at?: string
@@ -1017,6 +1031,13 @@ export type Database = {
           viewer_count?: number
         }
         Update: {
+          auction_seconds?: number
+          auction_type?: string
+          category_id?: string | null
+          is_private?: boolean
+          notify_followers?: boolean
+          scheduled_at?: string | null
+          tags?: string[]
           chat_paused?: boolean
           chat_slow_mode_seconds?: number
           created_at?: string
@@ -1033,6 +1054,13 @@ export type Database = {
           viewer_count?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "streams_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "streams_current_listing_fk"
             columns: ["current_listing_id"]
@@ -1142,6 +1170,15 @@ export type Database = {
       place_bid: {
         Args: {
           p_amount_cents: number
+          p_is_quick: boolean
+          p_listing_id: string
+        }
+        Returns: Json
+      }
+      place_bid_secure: {
+        Args: {
+          p_amount_cents: number
+          p_bidder_id: string
           p_is_quick: boolean
           p_listing_id: string
         }
