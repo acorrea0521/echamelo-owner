@@ -24,13 +24,20 @@ export default async function EarningsPage() {
 
   const { data: orders } = await supabase
     .from("orders")
-    .select("id, status, item_price_cents, shipping_cost_cents, seller_payout_cents, created_at")
+    .select("id, status, item_price_cents, shipping_cost_cents, seller_payout_cents, created_at, is_simulated")
     .eq("seller_id", user.id)
     .in("status", ["paid", "completed"])
     .order("created_at", { ascending: false });
 
-  const pending = (orders ?? []).filter((o) => o.status === "paid");
-  const completed = (orders ?? []).filter((o) => o.status === "completed");
+  // Simulated sales (demo circuit) are real rows but not real money: counting
+  // them here would show a balance that /api/earnings/request-payout refuses
+  // to pay out. They get their own line below instead.
+  const simulated = (orders ?? []).filter((o) => o.is_simulated);
+  const simulatedCents = simulated.reduce((sum, o) => sum + (o.seller_payout_cents ?? 0), 0);
+  const realOrders = (orders ?? []).filter((o) => !o.is_simulated);
+
+  const pending = realOrders.filter((o) => o.status === "paid");
+  const completed = realOrders.filter((o) => o.status === "completed");
   const pendingCents = pending.reduce((sum, o) => sum + (o.seller_payout_cents ?? 0), 0);
   const paidOutCents = completed.reduce((sum, o) => sum + (o.seller_payout_cents ?? 0), 0);
 
@@ -58,6 +65,19 @@ export default async function EarningsPage() {
         <span className="text-sm font-semibold text-primary">{formatCents(paidOutCents)}</span>
       </div>
 
+      {simulated.length > 0 && (
+        <div className="flex flex-col gap-1 rounded-2xl border border-dashed border-border bg-surface p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Ventas simuladas</span>
+            <span className="text-sm font-semibold">{formatCents(simulatedCents)}</span>
+          </div>
+          <span className="text-[11px] text-muted-foreground">
+            {simulated.length} {simulated.length === 1 ? "venta" : "ventas"} de demostración. No pasaron
+            por un cobro real, así que no generan saldo retirable.
+          </span>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-foreground/90">Historial de ventas</h2>
         {(orders ?? []).length === 0 ? (
@@ -70,6 +90,7 @@ export default async function EarningsPage() {
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium">{formatCents(o.seller_payout_cents ?? 0)}</span>
                 <span className="text-[11px] text-muted-foreground">
+                  {o.is_simulated ? "Simulada · " : ""}
                   {new Date(o.created_at).toLocaleDateString("es-MX")}
                 </span>
               </div>

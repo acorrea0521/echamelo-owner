@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const REQUIRED_FIELDS = [
   "legal_full_name",
@@ -72,7 +73,12 @@ export async function POST() {
     return NextResponse.json({ error: "No se pudo enviar tu solicitud." }, { status: 500 });
   }
 
-  await supabase.from("profiles").update({ seller_status: "solicitud_pendiente" }).eq("id", user.id);
+  // seller_status decides who may go live, so it is server-managed (see
+  // migration 0030) and written with the service-role client.
+  await createAdminClient()
+    .from("profiles")
+    .update({ seller_status: "solicitud_pendiente" })
+    .eq("id", user.id);
 
   return NextResponse.json({ ok: true });
 }

@@ -9,7 +9,8 @@ function formatCents(cents: number) {
 export default async function AdminDemoPage() {
   const admin = createAdminClient();
 
-  const [{ data: categories }, { data: demoUsers }, { data: simulatedOrders }] = await Promise.all([
+  const [{ data: categories }, { data: demoUsers }, { data: simulatedOrders }, { data: allSimulated }] =
+    await Promise.all([
     admin.from("categories").select("id, name").order("sort_order"),
     admin
       .from("profiles")
@@ -22,11 +23,14 @@ export default async function AdminDemoPage() {
       .eq("is_simulated", true)
       .order("created_at", { ascending: false })
       .limit(20),
+    // The list above is capped at 20; the tile and the total must count every
+    // simulated sale, not just the page being shown.
+    admin.from("orders").select("total_charged_cents").eq("is_simulated", true),
   ]);
 
   const sellers = (demoUsers ?? []).filter((u) => u.role === "seller");
   const buyers = (demoUsers ?? []).filter((u) => u.role === "buyer");
-  const simulatedTotalCents = (simulatedOrders ?? []).reduce(
+  const simulatedTotalCents = (allSimulated ?? []).reduce(
     (sum, o) => sum + o.total_charged_cents,
     0,
   );
@@ -55,7 +59,7 @@ export default async function AdminDemoPage() {
           <span className="text-[11px] text-muted-foreground">Compradores demo</span>
         </div>
         <div className="flex flex-col gap-1 rounded-2xl border border-border bg-surface p-3">
-          <span className="text-2xl font-bold">{simulatedOrders?.length ?? 0}</span>
+          <span className="text-2xl font-bold">{allSimulated?.length ?? 0}</span>
           <span className="text-[11px] text-muted-foreground">Ventas simuladas</span>
         </div>
       </div>
@@ -93,7 +97,9 @@ export default async function AdminDemoPage() {
 
       {(simulatedOrders ?? []).length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold">Últimas ventas simuladas</h2>
+          <h2 className="text-sm font-semibold">
+            Últimas ventas simuladas{(allSimulated?.length ?? 0) > 20 ? " (20 de " + allSimulated!.length + ")" : ""}
+          </h2>
           <p className="text-[11px] text-muted-foreground">
             {formatCents(simulatedTotalCents)} en total — excluido de Resumen, Órdenes y Saldos.
           </p>

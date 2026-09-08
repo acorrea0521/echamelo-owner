@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
   const [{ data: stream }, { data: profile }] = await Promise.all([
-    admin.from("streams").select("id, seller_id, is_demo").eq("id", streamId).maybeSingle(),
+    admin.from("streams").select("id, seller_id, is_demo, livekit_room_name").eq("id", streamId).maybeSingle(),
     admin.from("profiles").select("username, is_demo").eq("id", user.id).maybeSingle(),
   ]);
 
@@ -50,9 +50,14 @@ export async function POST(request: Request) {
 
   try {
     const token = await createLiveKitToken({
-      // The room has always been named after the stream id — the clients
-      // connect by that name, so it stays as it is.
-      roomName: streamId,
+      // Every other LiveKit call — stop, kick, participants, and the webhook
+      // that matches `livekit_room_name = event.room.name` — uses
+      // streams.livekit_room_name (`stream-<id>`), while this route used to
+      // hand out a token for a room named after the bare stream id. Clients
+      // joined that other room, so moderation and the end-of-stream sync were
+      // silently acting on a room nobody was in. Everyone takes the room from
+      // this token, so naming it correctly here lines all of them up.
+      roomName: stream.livekit_room_name,
       identity: user.id,
       name: profile.username,
       canPublish: stream.seller_id === user.id,
