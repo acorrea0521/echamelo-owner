@@ -48,7 +48,9 @@ export async function POST(request: Request) {
 
   const { data: listing } = await admin
     .from("listings")
-    .select("id, status, starting_price_cents, current_highest_bid_cents, shipping_cost_cents, requires_verified_buyers")
+    .select(
+      "id, status, starting_price_cents, current_highest_bid_cents, shipping_cost_cents, requires_verified_buyers, is_demo",
+    )
     .eq("id", listingId)
     .single();
 
@@ -63,9 +65,37 @@ export async function POST(request: Request) {
 
   const { data: buyer } = await admin
     .from("profiles")
-    .select("buyer_status, created_at, stripe_customer_id, stripe_payment_method_id")
+    .select("buyer_status, created_at, stripe_customer_id, stripe_payment_method_id, is_demo")
     .eq("id", user.id)
     .single();
+
+  // Demo accounts and real accounts never meet. Checked here so a real buyer
+  // aimed at a demo listing is turned away before any Stripe call, and again
+  // inside place_bid_secure so it holds for any other caller.
+  if (listing.is_demo !== Boolean(buyer?.is_demo)) {
+    return NextResponse.json(
+      { error: "Esta subasta no está disponible para tu cuenta." },
+      { status: 403 },
+    );
+  }
+
+  // Demo circuit: no card, no hold, no verification. There is no money behind
+  // a demo bid, so steps 2-6 in the comment above simply don't exist here —
+  // the bid goes straight to the same authoritative, row-locked RPC.
+  if (buyer?.is_demo) {
+    const { data: demoResult, error: demoError } = await admin.rpc("place_bid_secure", {
+      p_listing_id: listingId,
+      p_bidder_id: user.id,
+      p_amount_cents: bidAmountCents,
+      p_is_quick: isQuick,
+    });
+
+    if (demoError) {
+      return NextResponse.json({ error: mapBidError(demoError.message) }, { status: 400 });
+    }
+
+    return NextResponse.json({ listing: (demoResult as { listing: unknown }).listing });
+  }
 
   if (!buyer?.stripe_customer_id || !buyer?.stripe_payment_method_id) {
     return NextResponse.json({ error: "Necesitas una tarjeta guardada para pujar." }, { status: 400 });
@@ -186,5 +216,6 @@ function mapBidError(message: string) {
   if (message.includes("bid_amount_changed")) return "La puja mínima cambió. Intenta de nuevo.";
   if (message.includes("cannot_bid_on_own_listing")) return "No puedes pujar en tu propio producto.";
   if (message.includes("listing_not_found")) return "Producto no encontrado.";
+  if (message.includes("demo_circuit_mismatch")) return "Esta subasta no está disponible para tu cuenta.";
   return "No se pudo procesar tu puja.";
 }

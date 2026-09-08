@@ -341,6 +341,7 @@ export type Database = {
           description: string
           id: string
           image_urls: string[]
+          is_demo: boolean
           queue_position: number
           requires_verified_buyers: boolean
           seller_id: string
@@ -365,6 +366,7 @@ export type Database = {
           description: string
           id?: string
           image_urls?: string[]
+          is_demo?: boolean
           queue_position?: number
           requires_verified_buyers?: boolean
           seller_id: string
@@ -389,6 +391,7 @@ export type Database = {
           description?: string
           id?: string
           image_urls?: string[]
+          is_demo?: boolean
           queue_position?: number
           requires_verified_buyers?: boolean
           seller_id?: string
@@ -579,6 +582,7 @@ export type Database = {
           buyer_id: string
           created_at: string
           id: string
+          is_simulated: boolean
           item_price_cents: number
           listing_id: string
           platform_fee_cents: number
@@ -598,6 +602,7 @@ export type Database = {
           buyer_id: string
           created_at?: string
           id?: string
+          is_simulated?: boolean
           item_price_cents: number
           listing_id: string
           platform_fee_cents: number
@@ -617,6 +622,7 @@ export type Database = {
           buyer_id?: string
           created_at?: string
           id?: string
+          is_simulated?: boolean
           item_price_cents?: number
           listing_id?: string
           platform_fee_cents?: number
@@ -678,6 +684,7 @@ export type Database = {
           id: string
           identity_verified_at: string | null
           is_admin: boolean
+          is_demo: boolean
           is_official_admin: boolean
           payout_requested_at: string | null
           phone: string | null
@@ -706,6 +713,7 @@ export type Database = {
           id: string
           identity_verified_at?: string | null
           is_admin?: boolean
+          is_demo?: boolean
           is_official_admin?: boolean
           payout_requested_at?: string | null
           phone?: string | null
@@ -734,6 +742,7 @@ export type Database = {
           id?: string
           identity_verified_at?: string | null
           is_admin?: boolean
+          is_demo?: boolean
           is_official_admin?: boolean
           payout_requested_at?: string | null
           phone?: string | null
@@ -988,6 +997,7 @@ export type Database = {
           auction_seconds: number
           auction_type: string
           category_id: string | null
+          is_demo: boolean
           is_private: boolean
           notify_followers: boolean
           scheduled_at: string | null
@@ -1011,6 +1021,7 @@ export type Database = {
           auction_seconds?: number
           auction_type?: string
           category_id?: string | null
+          is_demo?: boolean
           is_private?: boolean
           notify_followers?: boolean
           scheduled_at?: string | null
@@ -1034,6 +1045,7 @@ export type Database = {
           auction_seconds?: number
           auction_type?: string
           category_id?: string | null
+          is_demo?: boolean
           is_private?: boolean
           notify_followers?: boolean
           scheduled_at?: string | null
@@ -1145,6 +1157,7 @@ export type Database = {
           description: string
           id: string
           image_urls: string[]
+          is_demo: boolean
           queue_position: number
           requires_verified_buyers: boolean
           seller_id: string

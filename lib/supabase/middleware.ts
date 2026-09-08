@@ -79,7 +79,7 @@ export async function updateSession(request: NextRequest) {
   if (user.email_confirmed_at && !isPublicPath) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, category_id, is_admin, stripe_payment_method_id, seller_status")
+      .select("role, category_id, is_admin, stripe_payment_method_id, seller_status, is_demo")
       .eq("id", user.id)
       .single();
 
@@ -115,9 +115,12 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Buyers can browse freely, but bidding happens on /stream — require a
-    // saved payment method before letting them in there.
+    // saved payment method before letting them in there. Demo buyers are the
+    // exception: their wins never charge anything, so there is no card to ask
+    // for (see migration 0028).
     if (
       profile?.role === "buyer" &&
+      !profile.is_demo &&
       !profile.stripe_payment_method_id &&
       pathname.startsWith("/stream") &&
       !isOnboardingPath

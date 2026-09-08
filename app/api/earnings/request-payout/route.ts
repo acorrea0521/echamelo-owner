@@ -15,7 +15,9 @@ export async function POST() {
     .from("orders")
     .select("id", { count: "exact", head: true })
     .eq("seller_id", user.id)
-    .eq("status", "paid");
+    .eq("status", "paid")
+    // Simulated sales don't create a real balance to withdraw.
+    .eq("is_simulated", false);
 
   if (!count) {
     return NextResponse.json({ error: "No tienes saldo pendiente." }, { status: 400 });

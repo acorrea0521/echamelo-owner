@@ -14,7 +14,9 @@ export default async function AdminSellerBalancesPage() {
     .select(
       "seller_id, seller_payout_cents, seller:profiles!orders_seller_id_fkey(username, display_name, stripe_payouts_enabled, payout_requested_at)",
     )
-    .eq("status", "paid");
+    .eq("status", "paid")
+    // A demo seller's simulated sales are not withdrawable money.
+    .eq("is_simulated", false);
 
   const bySeller = new Map<
     string,
