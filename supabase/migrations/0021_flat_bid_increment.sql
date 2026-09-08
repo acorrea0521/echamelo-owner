@@ -1,5 +1,14 @@
 -- Switch from a 10% multiplicative bid increment to a flat +$20 MXN step,
 -- for both real and bot bids so the two stay consistent with each other.
+
+-- 0006 declared place_bid as `returns public.listings`; this version returns
+-- jsonb, and `create or replace` cannot change a function's return type. On an
+-- already-migrated database this drop is a no-op for the version that matters
+-- (the function is recreated immediately below, in the same transaction);
+-- without it the migration chain cannot be replayed onto an empty database at
+-- all, which is what a staging environment or a restore has to do.
+drop function if exists public.place_bid(uuid, integer, boolean);
+
 create or replace function public.place_bid(p_listing_id uuid, p_amount_cents integer, p_is_quick boolean)
  returns jsonb
  language plpgsql
