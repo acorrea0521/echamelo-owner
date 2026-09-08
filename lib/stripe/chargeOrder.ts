@@ -19,13 +19,25 @@ export async function chargeOrderForListing(listingId: string) {
   const { data: order } = await admin
     .from("orders")
     .select(
-      "id, buyer_id, winning_bid_id, item_price_cents, shipping_cost_cents, platform_fee_cents, total_charged_cents, status",
+      "id, buyer_id, winning_bid_id, item_price_cents, shipping_cost_cents, platform_fee_cents, total_charged_cents, status, is_simulated",
     )
     .eq("listing_id", listingId)
     .single();
 
-  if (!order || order.status !== "pending_payment") {
-    return order ?? null;
+  if (!order) {
+    return null;
+  }
+
+  // A simulated sale (demo circuit) has no PaymentIntent behind it and is
+  // already settled by close_auction. Bail before any Stripe call — this is the
+  // last line of defense if a caller ever hands one of these to the real
+  // payment path.
+  if (order.is_simulated) {
+    return order;
+  }
+
+  if (order.status !== "pending_payment") {
+    return order;
   }
 
   // Safety net: release any other still-authorized holds on this listing

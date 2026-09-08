@@ -31,6 +31,9 @@ export default async function AdminOrdersPage() {
     .select(
       "id, status, item_price_cents, shipping_cost_cents, platform_fee_cents, total_charged_cents, created_at, stripe_payment_intent_id, buyer:profiles!orders_buyer_id_fkey(username), seller:profiles!orders_seller_id_fkey(username)",
     )
+    // Simulated (demo-circuit) sales are kept out of the real sales ledger —
+    // they are listed under /admin/demo.
+    .eq("is_simulated", false)
     .order("created_at", { ascending: false })
     .limit(100);
 

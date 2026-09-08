@@ -26,7 +26,10 @@ export default async function AdminOverviewPage() {
     admin
       .from("orders")
       .select("total_charged_cents, platform_fee_cents, stripe_fee_cents, seller_payout_cents, status")
-      .in("status", ["paid", "completed"]),
+      .in("status", ["paid", "completed"])
+      // Simulated (demo-circuit) sales never moved money — they would inflate
+      // GMV, commission and pending payouts. They live in /admin/demo instead.
+      .eq("is_simulated", false),
   ]);
 
   const gmvCents = (settledOrders ?? []).reduce((sum, o) => sum + o.total_charged_cents, 0);

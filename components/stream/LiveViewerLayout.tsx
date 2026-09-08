@@ -35,7 +35,7 @@ export function LiveViewerLayout({ streamId }: { streamId: string }) {
   }
 
   return (
-    <LiveKitRoom video={true} audio={true} token={token} serverUrl={LIVEKIT_URL} data-lk-theme="dark" style={{ height: "100vh", width: "100%" }}>
+    <LiveKitRoom video={false} audio={false} token={token} serverUrl={LIVEKIT_URL} data-lk-theme="dark" style={{ height: "100vh", width: "100%" }}>
       <VideoConference />
     </LiveKitRoom>
   );

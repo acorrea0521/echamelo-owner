@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe/client";
 
 // Same-request fallback for local dev where STRIPE_WEBHOOK_SECRET isn't
@@ -29,7 +30,10 @@ export async function POST() {
   const session = await stripe.identity.verificationSessions.retrieve(profile.buyer_identity_session_id);
 
   if (session.status === "verified") {
-    await supabase
+    // buyer_status gates how much a buyer may bid before verifying, so it is
+    // server-managed (see migration 0030) — written with the service-role
+    // client, only after Stripe itself reported the session verified.
+    await createAdminClient()
       .from("profiles")
       .update({ buyer_status: "verificado", identity_verified_at: new Date().toISOString() })
       .eq("id", user.id);

@@ -28,6 +28,17 @@ export async function POST(_request: Request, { params }: { params: Promise<{ li
   }
 
   if (listing.status === "sold") {
+    // A demo sale is born settled inside close_auction (simulated order, no
+    // Stripe object, no payout) — it must never reach the charge path.
+    if (listing.is_demo) {
+      const { data: order } = await admin
+        .from("orders")
+        .select("id, status, total_charged_cents, is_simulated")
+        .eq("listing_id", listingId)
+        .maybeSingle();
+      return NextResponse.json({ listing, order });
+    }
+
     const order = await chargeOrderForListing(listingId);
     return NextResponse.json({ listing, order });
   }

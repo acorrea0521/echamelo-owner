@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { StripeConnectStep } from "@/components/seller/StripeConnectStep";
 import { stripe } from "@/lib/stripe/client";
 
@@ -29,7 +30,11 @@ export default async function StripeOnboardingPage({
   // continuously; this is just a same-request fallback for the return trip.
   if (done === "1" && profile?.stripe_account_id && !profile.stripe_charges_enabled) {
     const account = await stripe.accounts.retrieve(profile.stripe_account_id);
-    await supabase
+    // These flags and seller_status are server-managed (migration 0030): a
+    // seller must not be able to mark their own account payout-ready. The
+    // values come from Stripe, so the write uses the service-role client.
+    const admin = createAdminClient();
+    await admin
       .from("profiles")
       .update({
         stripe_charges_enabled: account.charges_enabled,
@@ -38,7 +43,7 @@ export default async function StripeOnboardingPage({
       .eq("id", user.id);
 
     if (profile.seller_status === "aprobado_pendiente_stripe" && account.charges_enabled) {
-      await supabase.from("profiles").update({ seller_status: "activo" }).eq("id", user.id);
+      await admin.from("profiles").update({ seller_status: "activo" }).eq("id", user.id);
     }
 
     const { data: refreshed } = await supabase

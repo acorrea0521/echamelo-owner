@@ -19,7 +19,8 @@ export async function GET(request: Request) {
   const { data: pendingOrders, error } = await admin
     .from("orders")
     .select("id, listing_id, status")
-    .eq("status", "pending_payment");
+    .eq("status", "pending_payment")
+    .eq("is_simulated", false);
 
   if (error) {
     return NextResponse.json({ error: "Failed to fetch pending orders", details: error }, { status: 500 });

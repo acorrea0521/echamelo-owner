@@ -32,7 +32,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     .from("orders")
     .select("id, seller_payout_cents")
     .eq("seller_id", sellerId)
-    .eq("status", "paid");
+    .eq("status", "paid")
+    // Simulated (demo-circuit) sales never took money in, so they must never
+    // pay money out — the balances page excludes them for the same reason.
+    .eq("is_simulated", false);
 
   const totalCents = (pendingOrders ?? []).reduce((sum, o) => sum + (o.seller_payout_cents ?? 0), 0);
 

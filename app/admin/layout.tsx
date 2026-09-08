@@ -12,6 +12,7 @@ const NAV = [
   { href: "/admin/orders", label: "Órdenes" },
   { href: "/admin/moderation", label: "Moderación" },
   { href: "/admin/tickets", label: "Tickets" },
+  { href: "/admin/demo", label: "Demo" },
 ];
 
 // middleware.ts already redirects non-admins away from /admin; this is the
